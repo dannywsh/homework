@@ -41,7 +41,7 @@ int main()
         MyCheck.GetTextline(fin);
         MyCheck.CurlyBracesCheck(fin);
         //MyCheck.CommentCheck(fin);
-        fin.close();
+        //fin.close();
     }
 }
 
@@ -57,6 +57,8 @@ void CGramCheck::GetTextline(ifstream& fin)
 {
     string temp;
     while (getline(fin, temp)) { textline++; }
+    fin.clear();
+    fin.seekg(0, ios::beg);
 }
 //初始化构造函数
 
@@ -64,7 +66,6 @@ int CGramCheck::CurlyBracesCheck(ifstream& fin) {
     string temp;
     int sum(0),line(0),j(0);
     while (getline(fin, temp)) {
-
         ++line;
         int char_p(0);
         for (auto i : temp) {
@@ -86,24 +87,23 @@ int CGramCheck::CurlyBracesCheck(ifstream& fin) {
         err[0][j] = line;
         cout << line << ' ';
    }
+    fin.clear();
+    fin.seekg(0, ios::beg);
     return j + sum;
 }
 
-void CGramCheck::CommentCheck(ifstream& fin)
-{
+void CGramCheck::CommentCheck(ifstream& fin){
     commentFlag.reserve(textline);
     string temp;
     int line(0),flag(0);
     while (getline(fin, temp)) {
         ++line;
-        for (int i = 0; i < temp.size();)
-        {
+        for (int i = 0; i < temp.size();){
             if (temp.find("/*",i) != -1) {
                 flag++;
                 cout << "/*位置是" << temp.find("/*", i) << endl;
                 i += 2;
             }
         }
-
     }
 }
