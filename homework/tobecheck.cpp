@@ -40,8 +40,8 @@ int main()
     else {
         MyCheck.GetTextline(fin);
         MyCheck.CurlyBracesCheck(fin);
-        //MyCheck.CommentCheck(fin);
-        //fin.close();
+        MyCheck.CommentCheck(fin);
+        fin.close();
     }
 }
 
@@ -95,15 +95,40 @@ int CGramCheck::CurlyBracesCheck(ifstream& fin) {
 void CGramCheck::CommentCheck(ifstream& fin){
     commentFlag.reserve(textline);
     string temp;
-    int line(0),flag(0);
+    int line(0),comFlag(0);
     while (getline(fin, temp)) {
         ++line;
-        for (int i = 0; i < temp.size();){
-            if (temp.find("/*",i) != -1) {
-                flag++;
-                cout << "/*位置是" << temp.find("/*", i) << endl;
-                i += 2;
+        int beg_p = temp.find("/*");
+        int end_p = temp.rfind("*/");
+        int rend_p = end_p;
+        if (end_p == -1) {
+            if (beg_p == -1) {
+                if (comFlag) {
+                    commentFlag[line][0] = 0;
+                    commentFlag[line][1] = temp.length() - 1;
+                }
+                else {
+                    commentFlag[line][0] = -1;
+                    commentFlag[line][1] = -1;
+                }
+            } 
+            else{
+                if (comFlag) {
+                    commentFlag[line][0] = 0;
+                    commentFlag[line][1] = temp.length() - 1;
+                }
+                else {
+                    comFlag = 1;
+                    commentFlag[line][0] = beg_p;
+                    commentFlag[line][1] = temp.length() - 1;
+                }
             }
+        }
+       else{
+            while (rend_p != -1) {
+                temp.find("*/", rend_p);
+
+           }
         }
     }
 }
