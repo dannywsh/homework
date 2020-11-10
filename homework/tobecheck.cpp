@@ -12,6 +12,7 @@
 using namespace std;
 
 const char* SourceFile = "C:\\Users\\Administrator\\Desktop\\1.txt";
+const char* TargetFile = "C:\\Users\\Administrator\\Desktop\\out.txt";
 
 class CGramCheck
 {
@@ -93,42 +94,26 @@ int CGramCheck::CurlyBracesCheck(ifstream& fin) {
 }
 
 void CGramCheck::CommentCheck(ifstream& fin){
-    commentFlag.reserve(textline);
+    //commentFlag.reserve(textline);
     string temp;
-    int line(0),comFlag(0);
+    ofstream fout;
+    bool doubledot = false;
+    bool comflag = false;
+    bool  = false;
+    fout.open(TargetFile, ios::out | ios::trunc);
+    int line(0);
+    
     while (getline(fin, temp)) {
         ++line;
-        int beg_p = temp.find("/*");
-        int end_p = temp.rfind("*/");
-        int rend_p = end_p;
-        if (end_p == -1) {
-            if (beg_p == -1) {
-                if (comFlag) {
-                    commentFlag[line][0] = 0;
-                    commentFlag[line][1] = temp.length() - 1;
+        for (auto i : temp) {
+            if (i == '\"') {
+                if (doubledot) {
+                    doubledot = false; 
                 }
                 else {
-                    commentFlag[line][0] = -1;
-                    commentFlag[line][1] = -1;
-                }
-            } 
-            else{
-                if (comFlag) {
-                    commentFlag[line][0] = 0;
-                    commentFlag[line][1] = temp.length() - 1;
-                }
-                else {
-                    comFlag = 1;
-                    commentFlag[line][0] = beg_p;
-                    commentFlag[line][1] = temp.length() - 1;
+                    doubledot = true;
                 }
             }
-        }
-       else{
-            while (rend_p != -1) {
-                temp.find("*/", rend_p);
-
-           }
         }
     }
 }
