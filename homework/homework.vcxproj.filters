@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tobecheck.cpp">
+    <ClCompile Include="grammcheck.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
