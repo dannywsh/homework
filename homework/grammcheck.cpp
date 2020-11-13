@@ -13,8 +13,10 @@
 using namespace std;
 
 const char* SourceFile = "C:\\Users\\Administrator\\Desktop\\1.txt";
-const char* TargetFile = "C:\\Users\\Administrator\\Desktop\\out.txt";
-const char* numalp = "1234567890abcdefghijklmnopqrstuvwxyz";
+const char* TargetFile = "C:\\Users\\Administrator\\Desktop\\2.txt";
+const char* OutputFile = "C:\\Users\\Administrator\\Desktop\\out.txt";
+
+
 
 class CGramCheck
 {
@@ -25,10 +27,10 @@ private:
 public:
 	CGramCheck();
 	void GetTextline(ifstream& fin);            //获取文件总行数
-	void ParentheseCheck(ifstream& fin);	//检查括号错误，返回错误总数
 	void CommentCheck(ifstream& fin);   //对注释内容进行检查，并找出错误 
+	void ParentheseCheck(ifstream& fin);	//检查括号错误，返回错误总数
 	void SemicolonCheck(ifstream& fin);	//分号检查
-
+	static bool isblank(char i) { return i == ' ' || i == '\t'; }
 };
 
 int main()
@@ -42,8 +44,9 @@ int main()
 	}
 	else {
 		MyCheck.GetTextline(fin);
-		MyCheck.ParentheseCheck(fin);
 		MyCheck.CommentCheck(fin);
+		MyCheck.ParentheseCheck(fin);
+		MyCheck.SemicolonCheck(fin);
 		fin.close();
 	}
 }
@@ -84,33 +87,43 @@ void CGramCheck::ParentheseCheck(ifstream& fin)
 			}
 			else if (i == ')') {
 				if (!parentheseFlag.size()) {
-					cout << "缺失左括号：line " << line << endl;
+					cout << "缺失左园括号：line " << line << endl;
 				}
 				else {
-					while (parentheseFlag.back()[1] != '(') {
-						cout << "缺失左花括号：" << endl;
+					while (parentheseFlag.size() && parentheseFlag.back()[1] != '(') {
+						cout << "缺失右花括号：line" << line << endl;
 						parentheseFlag.pop_back();
 					}
-					parentheseFlag.pop_back();
+					if (!parentheseFlag.size()) {
+						cout << "缺失左园括号：line " << line << endl;
+					}
+					else {
+						parentheseFlag.pop_back();
+					}
 				}
 			}
 			else if (i == '}') {
 				if (!parentheseFlag.size()) {
-					cout << "缺失左括号：line " << line << endl;
+					cout << "缺失左花括号：line " << line << endl;
 				}
 				else {
-					while (parentheseFlag.back()[1] != '{') {
-						cout << "缺失左⚪括号：" << endl;
+					while (parentheseFlag.size() && parentheseFlag.back()[1] != '{') {
+						cout << "缺失右园括号：" <<line << endl;
 						parentheseFlag.pop_back();
 					}
-					parentheseFlag.pop_back();
+					if (!parentheseFlag.size()) {
+						cout << "缺失左花括号：line " << line << endl;
+					}
+					else {
+						parentheseFlag.pop_back();
+					}
 				}
 			}
 		}
-		while (parentheseFlag.size()) {
-			cout << "右括号缺失：line" << parentheseFlag.back()[0] << endl;
-			parentheseFlag.pop_back();
-		}
+	}
+	while (parentheseFlag.size()) {
+		cout << "右" << char(parentheseFlag.back()[1]) << "缺失：line" << parentheseFlag.back()[0] << endl;
+		parentheseFlag.pop_back();
 	}
 	fin.clear();
 	fin.seekg(0, ios::beg);
@@ -135,28 +148,32 @@ void CGramCheck::CommentCheck(ifstream& fin) {
 		while (i < temp.length() - 1) {
 			if (temp[i] == '\"') {
 				if (!comflag) {
-					if (doublequotes)doublequotes = false;
-					fout << temp[i];
-					i++;
-				}
-				else if (!doublequotes && comflag) {
-					i++;
+					if (singlequotes) {
+						i++;
+					}
+					else {
+						doublequotes = !doublequotes;
+						fout << temp[i];
+						i++;
+					}
 				}
 				else {
-					cout << "还有这种情况？？？" << endl;
+					i++;
 				}
 			}
 			else if (temp[i] == '\'') {
 				if (!comflag) {
-					if (singlequotes)singlequotes = false;
-					fout << temp[i];
-					i++;
+					if (doublequotes) {
+						i++;
+					}
+					else {
+						singlequotes = !singlequotes;
+						fout << temp[i];
+						i++;
+					}
 				}
-				else if (!singlequotes && comflag) {
+				else{
 					i++;
-				}
-				else {
-					cout << "还有这种情况？？？" << endl;
 				}
 			}
 			else if (temp[i] == '/' && temp[i + 1] == '*') {
@@ -168,7 +185,7 @@ void CGramCheck::CommentCheck(ifstream& fin) {
 					i++;
 				}
 				else if (doublequotes || singlequotes) {
-					fout << temp[i];
+					//fout << temp[i];
 					i++;
 				}
 				else {
@@ -186,7 +203,7 @@ void CGramCheck::CommentCheck(ifstream& fin) {
 					comflag = false;
 				}
 				else if (doublequotes || singlequotes) {
-					fout << temp[i];
+					//fout << temp[i];
 					i++;
 				}
 				else {
@@ -196,12 +213,15 @@ void CGramCheck::CommentCheck(ifstream& fin) {
 			else if (temp[i] == '/' && temp[i + 1] == '/') {
 				if ((!doublequotes) && (!singlequotes))break;
 				else {
-					fout << temp[i];
+					//fout << temp[i];
 					i++;
 				}
 			}
+			else if (temp[i] == '\\') {
+				i += 2;
+			}
 			else {
-				if (!comflag) {
+				if (!comflag	&& !singlequotes && !doublequotes) {
 					fout << temp[i];
 				}
 				i++;
@@ -210,25 +230,40 @@ void CGramCheck::CommentCheck(ifstream& fin) {
 		if (i == temp.length() - 1)fout << temp[i];
 		fout << endl;
 		if (doublequotes) {
-			cout << "缺少双引号！";
+			cout << "缺少双引号！" << line << endl;
 			doublequotes = false;
-		}
+		} 
 		if (singlequotes) {
-			cout << "缺少单引号！";
+			cout << "缺少单引号！" << line << endl;
 			singlequotes = false;
 		}
 	}
+	fin.clear();
+	fin.seekg(0, ios::beg);
 	fout.close();
 }
 void CGramCheck::SemicolonCheck(ifstream& fin)
 {
-	string temp;
+	string temp; int line(0);
 	while (getline(fin, temp)) {
+		++line;
 		if (!temp.length()) { continue; }
-		auto itor = remove(temp.begin(), temp.end(), ' ');
-		temp.erase(itor, temp.end());
-		if (temp.find(";") == -1) {
-			if(temp.find_first_of(numalp)!=-1	|| temp.find("if") == -1|| temp.find("for") == -1 || temp.find("while") == -1 || temp.find("") == -1)
+		temp.erase(remove_if(temp.begin(), temp.end(),isblank), temp.end());
+		if (temp.find(";") == -1&& temp.length()) {
+			if (temp.find("if") == -1 
+				&& temp.find("while") == -1 
+				&& temp.find("else") == -1 
+				&& temp.find("class") == -1 
+				&& temp.find("public") == -1 
+				&& temp.find("private") == -1
+				&& temp.find("protected") == -1
+				&& temp.find("main") == -1
+				&& temp.find("struct") == -1
+				&& temp.find_first_of("{}#()") == -1) {
+				cout << "缺少分号:line"<<line<<endl;
+			}
 		}
 	}
+	fin.clear();
+	fin.seekg(0, ios::beg);
 }
