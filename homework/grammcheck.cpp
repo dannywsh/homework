@@ -1,4 +1,4 @@
-﻿// homework.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿// grammcheck.cpp : 此文件包含 "main" 函数，为代码检查主体文件。
 //
 
 #include <iostream>
@@ -20,6 +20,10 @@
 #define Leftbracket 2
 #define Rightbracket 3
 
+#define NumberSign 0
+#define Leftangle 1
+#define Rightangle 2
+
 using namespace std;
 
 const char* SrcFile = "C:\\Users\\Administrator\\Desktop\\1.cpp";
@@ -35,6 +39,8 @@ private:
 	vector<vector<int> >	bracketError;		//花圆括号错误<[错误行数],[错误类型]>
 	vector<int>	semicolonError;		//引号错误<[错误行数]>
 	vector<int>	calculateError;	//计算错误<[错误行数]>
+	vector<int>	colonError;	//冒号错误<[错误行数]>
+	vector<vector<int> >	angleError;		//尖括号错误<[错误行数],[错误类型]>
 	static bool ispareth(char i) { return i == ' ' || i == '\t' || i == '}'; }
 
 public:
@@ -44,6 +50,8 @@ public:
 	int ParentheseCheck(const char* Tempfile);	//检查括号错误，返回错误总数
 	int SemicolonCheck(const char* Tempfile);	//分号检查
 	int CalculateCheck(const char* Tempfile);		//计算检查
+	int ColonCheck(const char* Tempfile);		//计算检查
+	int AnglebracketCheck(const char* Tempfile);	//尖括号检查
 	int OutputResult(const char* OutFile);	//输出结果
 };
 
@@ -55,7 +63,10 @@ int main()
 	MyCheck.ParentheseCheck(TrgFile);
 	MyCheck.SemicolonCheck(TrgFile);
 	MyCheck.CalculateCheck(TrgFile);
+	MyCheck.ColonCheck(TrgFile);
+	MyCheck.AnglebracketCheck(TrgFile);
 	MyCheck.OutputResult(TrgFile);
+	return 0;
 }
 
 CGramCheck::CGramCheck()
@@ -352,8 +363,23 @@ int CGramCheck::SemicolonCheck(const char* Tempfile)
 				&& temp.find("main") == -1
 				&& temp.find("struct") == -1
 				&& temp.find_first_of("{}#()") == -1) {
-				semicolonError.push_back(line);
-				cout << "缺少分号:line" << line << endl; errSum++;
+					if(temp.find("namespace") == -1
+						&& temp.find("int") == -1
+						&& temp.find("float") == -1
+						&& temp.find("double") == -1
+						&& temp.find("short") == -1
+						&& temp.find("long") == -1
+						&& temp.find("bool") == -1
+						&& temp.find("char") == -1
+						&& temp.find("return") == -1
+						&& temp.find("cout") == -1
+						&& temp.find("cin") == -1
+						){ }
+					else {
+						semicolonError.push_back(line);
+						cout << "缺少分号:line" << line << endl; errSum++;
+					}
+
 			}
 		}
 	}
@@ -420,6 +446,71 @@ int CGramCheck::CalculateCheck(const char* Tempfile)
 	return 0;
 }
 
+int CGramCheck::ColonCheck(const char* Tempfile)
+{
+	string temp;
+	ifstream fin;
+	int line(0);
+	fin.open(Tempfile);
+	if (!fin) {
+		cout << "Can't open file " << Tempfile << "!" << endl;
+		return ERR;
+	}
+	
+	while (getline(fin, temp)) {
+		++line;
+		if(temp.find("private")!=-1|| temp.find("public")!=-1||temp.find("protected")!=-1){
+			if (temp.find(":") == -1) {
+				cout << "缺少冒号！" << line<<endl; errSum++;
+				colonError.push_back(line);
+			}
+		}
+	}
+	fin.close();
+	return 0;
+}
+
+int CGramCheck::AnglebracketCheck(const char* Tempfile)
+{
+	string temp;
+	ifstream fin;
+	int line(0);
+	fin.open(Tempfile);
+	if (!fin) {
+		cout << "Can't open file " << Tempfile << "!" << endl;
+		return ERR;
+	}
+
+	while (getline(fin, temp)) {
+		++line;
+		if (temp.find("include") != -1) {
+			if (temp.find("#") == -1) {
+				cout << "缺少＃号！" << line << endl; errSum++;
+				vector<int>tmp(0);
+				tmp.push_back(line);
+				tmp.push_back(NumberSign);
+				angleError.push_back(tmp);
+			}
+			if (temp.find("<") == -1) {
+				cout << "缺少左尖括号！" << line << endl; errSum++;
+				vector<int>tmp(0);
+				tmp.push_back(line);
+				tmp.push_back(Leftangle);
+				angleError.push_back(tmp);
+			}
+			if (temp.find(">") == -1) {
+				cout << "缺少右尖括号！" << line << endl; errSum++;
+				vector<int>tmp(0);
+				tmp.push_back(line);
+				tmp.push_back(Rightangle);
+				angleError.push_back(tmp);
+			}
+		}
+	}
+	fin.close();
+	return 0;
+}
+
 int CGramCheck::OutputResult(const char* OutFile)
 {
 	ofstream fout;
@@ -466,6 +557,21 @@ int CGramCheck::OutputResult(const char* OutFile)
 		fout << "计算错误：\tline：" << i << endl;
 	}
 	fout << endl;
+
+	fout << "冒号错误为：" << endl;
+	for (auto i : colonError) {
+		fout << "缺少冒号：\tline：" << i << endl;
+	}
+	fout << endl;
+
+	fout << "尖括号错误为：" << endl;
+	for (auto i : angleError) {
+		if (i[1] == NumberSign)fout << "缺少＃号：\tline：" << i[0] << endl;
+		if (i[1] == Rightangle)fout << "缺少右尖符号：\tline：" << i[0] << endl;
+		if (i[1] == Leftangle)fout << "缺少左尖符号：\tline：" << i[0] << endl;
+	}
+	fout << endl;
+
 	fout.close();
 	return 0;
 }
