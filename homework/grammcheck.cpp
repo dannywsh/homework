@@ -7,8 +7,6 @@
 #include<vector>
 #include<algorithm>
 
-#define ErrNumber   100
-#define ErrClass   10
 #define ERR		1
 
 #define LeftComment 0
@@ -24,21 +22,20 @@
 
 using namespace std;
 
-const char* SrcFile = "C:\\Users\\Administrator\\Desktop\\1.txt";
+const char* SrcFile = "C:\\Users\\Administrator\\Desktop\\1.cpp";
 const char* TrgFile = "C:\\Users\\Administrator\\Desktop\\2.txt";
-const char* OutFile = "C:\\Users\\Administrator\\Desktop\\out.txt";
 
 class CGramCheck
 {
 private:
 	int textline;   //文件总行数
 	int errSum;	//错误总数
-	vector<int>	curlyBracesError;
 	vector<vector<int> >	commentError;		//注释错误<[错误行数],[错误类型]>
 	vector<vector<int> >	quotationError;		//单双引号错误<[错误行数],[错误类型]>
 	vector<vector<int> >	bracketError;		//花圆括号错误<[错误行数],[错误类型]>
 	vector<int>	semicolonError;		//引号错误<[错误行数]>
 	vector<int>	calculateError;	//计算错误<[错误行数]>
+	static bool ispareth(char i) { return i == ' ' || i == '\t' || i == '}'; }
 
 public:
 	CGramCheck();
@@ -47,7 +44,7 @@ public:
 	int ParentheseCheck(const char* Tempfile);	//检查括号错误，返回错误总数
 	int SemicolonCheck(const char* Tempfile);	//分号检查
 	int CalculateCheck(const char* Tempfile);		//计算检查
-	static bool ispareth(char i) { return i == ' ' || i == '\t' || i == '}'; }
+	int OutputResult(const char* OutFile);	//输出结果
 };
 
 int main()
@@ -58,6 +55,7 @@ int main()
 	MyCheck.ParentheseCheck(TrgFile);
 	MyCheck.SemicolonCheck(TrgFile);
 	MyCheck.CalculateCheck(TrgFile);
+	MyCheck.OutputResult(TrgFile);
 }
 
 CGramCheck::CGramCheck()
@@ -157,7 +155,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 			}
 			else if (temp[i] == '*' && temp[i + 1] == '/') {
 				if ((!doublequotes) && (!singlequotes) && !comflag) {
-					cout << "缺少/*" << endl;
+					cout << "缺少/*" << endl; errSum++;
 					vector<int>tp;
 					tp.push_back(line);
 					tp.push_back(LeftComment);
@@ -202,7 +200,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 				singlequotes = !singlequotes;
 			}
 			if (doublequotes) {
-				cout << "缺少双引号！" << line << endl;
+				cout << "缺少双引号！" << line << endl; errSum++;
 				vector<int>tp;
 				tp.push_back(line);
 				tp.push_back(Doublequotation);
@@ -210,7 +208,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 				doublequotes = false;
 			}
 			else if (singlequotes) {
-				cout << "缺少单引号！" << line << endl;
+				cout << "缺少单引号！" << line << endl; errSum++;
 				vector<int>tp;
 				tp.push_back(line);
 				tp.push_back(Singlequotation);
@@ -222,7 +220,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 		fout << endl;
 	}
 	if (comflag) {
-		cout << "缺少*/" << endl;
+		cout << "缺少*/" << endl; errSum++;
 		vector<int>tp;
 		tp.push_back(line);
 		tp.push_back(RightComment);
@@ -265,7 +263,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 					tmp.push_back(line);
 					tmp.push_back(Rightbracket);
 					bracketError.push_back(tmp);
-					cout << "缺失左园括号：line " << line << endl;
+					cout << "缺失左圆括号：line " << line << endl; errSum++;
 				}
 				else {
 					if (parentheseFlag.back()[1] != '(') {
@@ -273,7 +271,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 						tmp.push_back(line);
 						tmp.push_back(Rightbracket);
 						bracketError.push_back(tmp);
-						cout << "缺失左园括号：line " << line << endl;
+						cout << "缺失左圆括号：line " << line << endl; errSum++;
 					}
 					else {
 						parentheseFlag.pop_back();
@@ -286,7 +284,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 					tmp.push_back(line);
 					tmp.push_back(Leftparenth);
 					bracketError.push_back(tmp);
-					cout << "缺失左花括号：line " << line << endl;
+					cout << "缺失左花括号：line " << line << endl; errSum++;
 				}
 				else {
 					while (parentheseFlag.size() && parentheseFlag.back()[1] != '{') {
@@ -294,7 +292,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 						tmp.push_back(parentheseFlag.back()[0]);
 						tmp.push_back(Rightbracket);
 						bracketError.push_back(tmp);
-						cout << "缺失右圆括号：" << line << endl;
+						cout << "缺失右圆括号：" << line << endl; errSum++;
 						parentheseFlag.pop_back();
 					}
 					if (!parentheseFlag.size()) {
@@ -302,7 +300,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 						tmp.push_back(line);
 						tmp.push_back(Leftparenth);
 						bracketError.push_back(tmp);
-						cout << "缺失左花括号：line " << line << endl;
+						cout << "缺失左花括号：line " << line << endl; errSum++;
 					}
 					else {
 						parentheseFlag.pop_back();
@@ -323,7 +321,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 			tmp.push_back(Rightbracket);
 		}
 		bracketError.push_back(tmp);
-		cout << "缺失相对应的右" << char(parentheseFlag.back()[1]) << "括号：line" << parentheseFlag.back()[0] << endl;
+		cout << "缺失相对应的右" << char(parentheseFlag.back()[1]) << "括号：line" << parentheseFlag.back()[0] << endl; errSum++;
 		parentheseFlag.pop_back();
 	}
 	fin.close();
@@ -355,7 +353,7 @@ int CGramCheck::SemicolonCheck(const char* Tempfile)
 				&& temp.find("struct") == -1
 				&& temp.find_first_of("{}#()") == -1) {
 				semicolonError.push_back(line);
-				cout << "缺少分号:line" << line << endl;
+				cout << "缺少分号:line" << line << endl; errSum++;
 			}
 		}
 	}
@@ -368,6 +366,8 @@ int CGramCheck::CalculateCheck(const char* Tempfile)
 	string temp;
 	ifstream fin;
 	int line(0);
+	vector<char>symbolstack;
+	vector<char>numstack;
 	fin.open(Tempfile);
 	if (!fin) {
 		cout << "Can't open file " << Tempfile << "!" << endl;
@@ -375,85 +375,97 @@ int CGramCheck::CalculateCheck(const char* Tempfile)
 	}
 	while (getline(fin, temp)) {
 		++line;
-		int i(0);
-		while (i < temp.length() - 1) {
-			if (temp[i] == '') {
-				if (temp[i + 1] == '+' || temp[i + 1] == '-' || temp[i + 1] == '*' || temp[i + 1] == '/') {
-					cout << "运算符前无数字";
-					calculateError.push_back(line);
-					i++; 
-				}
-				else {
-					i++;
-				}
-			}
-			else if (temp[i] == '+') {
-				if (temp[i + 1] == '+') {
-					if (i + 2 < temp.length() && isalnum(temp[i + 2])) {
-						cout << "自加后有数字";
-						calculateError.push_back(line);
-						i += 2;
+		bool numflag = false;
+		int p = temp.find("=");
+		if (p != -1 && p != temp.length() - 1 && temp[p + 1] != '=') {
+			p++;
+			if (p >= temp.length())continue;
+			while (p < temp.length()) {
+				if (isalnum(temp[p])) {
+					if (!symbolstack.empty()) { symbolstack.pop_back(); }
+					else if (!numflag) {
+						numstack.push_back(temp[p]);
+						numflag = true;
 					}
 				}
-				else if (temp[i + 1] == '-' || temp[i + 1] == '*' || temp[i + 1] == '/') {
-					cout << "双运算符不匹配";
-					calculateError.push_back(line);
-				}
-				else if (!isalnum(temp[i + 1])) {
-					cout << "运算符后无数字";
-					calculateError.push_back(line);
-					i++;
-				}
-				else {
-					i++;
-				}
-			}
-			else if (temp[i] == '-') {
-				if (temp[i + 1] == '-') {
-					if (i + 2 < temp.length() && isalnum(temp[i + 2])) {
-						cout << "自减后有数字";
+				else if (temp[p] == '+' || temp[p] == '-' || temp[p] == '*' || temp[p] == '/') {
+					numflag = false;
+					if (numstack.empty()) {
+						cout << "缺少运算前项"<<line<<endl; errSum++;
 						calculateError.push_back(line);
-						i += 2;
+					}
+					else if (!symbolstack.empty()) {
+						cout << "缺少前加项"<<line<<endl; errSum++;
+						calculateError.push_back(line);
+					}
+					else {
+						symbolstack.push_back(temp[p]);
 					}
 				}
-				else if (temp[i + 1] == '+' || temp[i + 1] == '*' || temp[i + 1] == '/') {
-					cout << "双运算符不匹配";
-					calculateError.push_back(line);
-				}
-				else if (!isalnum(temp[i + 1])) {
-					cout << "运算符后无数字";
-					calculateError.push_back(line);
-					i++;
-				}
-				else {
-					i++;
-				}
-			}
-			else if (temp[i] == '*' || temp[i] == '/') {
-				if (temp[i + 1] == '+' || temp[i + 1] == '-' || temp[i + 1] == '*' || temp[i + 1] == '/') {
-					cout << "双运算符不匹配";
-					calculateError.push_back(line);
-				}
-				else if (!isalnum(temp[i + 1])) {
-					cout << "运算符后无数字";
-					calculateError.push_back(line);
-					i++;
-				}
-				else {
-					i++;
-				}
-			}
-			else {
-				i++;
+				else {}
+				p++;
 			}
 		}
-		if (i == temp.length() - 1) {
-			if (temp[i] == '+' || temp[i] == '-' || temp[i] == '*' || temp[i] == '/') {
-				cout << "运算符后无数字";
-				calculateError.push_back(line);
-			}
+		else {
+			continue;
 		}
+		if (!symbolstack.empty()) {
+			cout << "缺少运算后值" << line<<endl; errSum++;
+			calculateError.push_back(line);
+		}
+		symbolstack.clear();
+		numstack.clear();
 	}
 	fin.close();
+	return 0;
+}
+
+int CGramCheck::OutputResult(const char* OutFile)
+{
+	ofstream fout;
+	fout.open(OutFile, ios::trunc);
+	if (!fout) {
+		cout << "Can't open file " << OutFile<< "!" << endl;
+		return ERR;
+	}
+	fout << "该程序代码总行数为：" << textline << endl;
+	fout << "该程序错误总数为：" << errSum << endl;
+	fout << endl;
+
+	fout << "注释错误为：" << endl;
+	for (auto i : commentError) {
+		if (i[1] == LeftComment)fout << "缺少左注释符号：\tline：" << i[0] << endl;
+		if (i[1] == RightComment)fout << "缺少右注释符号：\tline：" << i[0] << endl;
+	}
+	fout << endl;
+
+	fout << "引号错误为：" << endl;
+	for (auto i : quotationError) {
+		if (i[1] == Singlequotation)fout << "缺少单引号：\tline：" << i[0] << endl;
+		if (i[1] == Doublequotation)fout << "缺少双引号：\tline：" << i[0] << endl;
+	}
+	fout << endl;
+
+	fout << "括号错误为：" << endl;
+	for (auto i : bracketError) {
+		if (i[1] == Leftbracket)fout << "缺少左圆括号：\tline：" << i[0] << endl;
+		if (i[1] == Rightbracket)fout << "缺少右圆符号：\tline：" << i[0] << endl;
+		if (i[1] == Leftparenth)fout << "缺少左花符号：\tline：" << i[0] << endl;
+		if (i[1] == Rightparenth)fout << "缺少右花符号：\tline：" << i[0] << endl;
+	}
+	fout << endl;
+
+	fout << "分号错误为：" << endl;
+	for (auto i : semicolonError) {
+		fout << "缺少分号：\tline：" << i << endl;
+	}
+	fout << endl;
+
+	fout << "计算错误为："<< endl;
+	for (auto i : calculateError) {
+		fout << "计算错误：\tline：" << i << endl;
+	}
+	fout << endl;
+	fout.close();
 	return 0;
 }
