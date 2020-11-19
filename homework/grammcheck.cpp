@@ -1,5 +1,17 @@
-﻿// grammcheck.cpp : 此文件包含 "main" 函数，为代码检查主体文件。
-//
+﻿//题目：C++源程序语法检查器
+
+//本程序实现了以下基本语法检查功能：
+//①	花括号配对情况；
+//②	分号缺失情况；
+//③	运算符符合运算规则情况；
+//④	引号（单、双）配对情况；
+//⑤	块注释匹配情况（/**/）
+//⑥	圆括号匹配情况；
+
+//额外实现功能：
+//①	尖括号配对情况；
+//②	冒号缺失情况；
+//③	行注释（//）规则情况；
 
 #include <iostream>
 #include <string>
@@ -26,8 +38,8 @@
 
 using namespace std;
 
-const char* SrcFile = "C:\\Users\\Administrator\\Desktop\\1.cpp";
-const char* TrgFile = "C:\\Users\\Administrator\\Desktop\\2.txt";
+const char* SrcFile = "tobecheck.cpp";
+const char* TrgFile = "checkres.txt";
 
 class CGramCheck
 {
@@ -46,11 +58,11 @@ private:
 public:
 	CGramCheck();
 	int GetTextline(const char* Sourcefile);            //获取文件总行数
-	int CommentCheck(const char* Sourcefile, const char* Tempfile);   //对注释内容进行检查，并找出错误 
-	int ParentheseCheck(const char* Tempfile);	//检查括号错误，返回错误总数
+	int CommentCheck(const char* Sourcefile, const char* Tempfile);   //对注释内容进行检查，并找出引号错误 
+	int ParentheseCheck(const char* Tempfile);	//检查括号（圆、花）错误，返回错误总数
 	int SemicolonCheck(const char* Tempfile);	//分号检查
 	int CalculateCheck(const char* Tempfile);		//计算检查
-	int ColonCheck(const char* Tempfile);		//计算检查
+	int ColonCheck(const char* Tempfile);		//冒号检查
 	int AnglebracketCheck(const char* Tempfile);	//尖括号检查
 	int OutputResult(const char* OutFile);	//输出结果
 };
@@ -69,12 +81,14 @@ int main()
 	return 0;
 }
 
+//初始化构造函数
 CGramCheck::CGramCheck()
 {
 	textline = 0;
 	errSum = 0;
-}//初始化构造函数
+}
 
+//获取文件总行数
 int CGramCheck::GetTextline(const char* Sourcefile)
 {
 	string temp;
@@ -83,17 +97,18 @@ int CGramCheck::GetTextline(const char* Sourcefile)
 	if (!fin) {
 		cout << "Can't open file " << Sourcefile << "!" << endl;
 		return ERR;
-	}
-	while (getline(fin, temp)) { textline++; }
+	}//打开文件
+	while (getline(fin, temp)) { textline++; }	//获取行数
 	fin.close();
 	return 0;
 }
 
+//检查引号，注释情况，返回错误总数
 int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 	string temp;
-	bool doublequotes = false;
-	bool singlequotes = false;
-	bool comflag = false;
+	bool doublequotes = false;		//双引号标志位
+	bool singlequotes = false;		//单引号标志位
+	bool comflag = false;				//注释标志位
 	int line(0);
 
 	ifstream fin; ofstream fout;
@@ -106,17 +121,17 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 	if (!fout) {
 		cout << "Can't open file " << Tempfile << "!" << endl;
 		return ERR;
-	}
+	}//打开文件并判断
 
 	while (getline(fin, temp)) {
-		++line;
+		++line;		//行数
 		int i(0);
 		if (!temp.length()) {
 			fout << endl;
 			continue;
 		}
 		while (i < temp.length() - 1) {
-			if (temp[i] == '"') {
+			if (temp[i] == '"') {	//判断双引号情况
 				if (!comflag) {
 					if (singlequotes) {
 						fout << temp[i];
@@ -131,8 +146,8 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 				else {
 					i++;
 				}
-			}
-			else if (temp[i] == '\'') {
+			}	
+			else if (temp[i] == '\'') {	//判断单引号情况
 				if (!comflag) {
 					if (doublequotes) {
 						fout << temp[i];
@@ -148,7 +163,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 					i++;
 				}
 			}
-			else if (temp[i] == '/' && temp[i + 1] == '*') {
+			else if (temp[i] == '/' && temp[i + 1] == '*') {	//判断块前注释情况
 				if ((!doublequotes) && (!singlequotes) && !comflag) {
 					i += 2;
 					comflag = true;
@@ -163,14 +178,14 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 				else {
 					cout << "还有这种情况？？？" << endl;
 				}
-			}
-			else if (temp[i] == '*' && temp[i + 1] == '/') {
+			}	//判断括号是否在注释内
+			else if (temp[i] == '*' && temp[i + 1] == '/') {//判断块后注释情况
 				if ((!doublequotes) && (!singlequotes) && !comflag) {
 					cout << "缺少/*" << endl; errSum++;
 					vector<int>tp;
 					tp.push_back(line);
 					tp.push_back(LeftComment);
-					commentError.push_back(tp);
+					commentError.push_back(tp);		//对错误进行压栈操作
 					//fout << temp[i];
 					i += 2;
 				}
@@ -203,7 +218,7 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 				i++;
 			}
 		}
-		if (i == temp.length() - 1) {
+		if (i == temp.length() - 1) {		//判断标志位将错误与行数压入栈中
 			if (temp[i] == '\"' && !comflag) {
 				doublequotes = !doublequotes;
 			}
@@ -238,15 +253,16 @@ int CGramCheck::CommentCheck(const char* Sourcefile, const char* Tempfile) {
 		commentError.push_back(tp);
 	}
 	fin.close();
-	fout.close();
+	fout.close();		//关闭文件
 	return 0;
 }
 
+//检查括号（圆、花）错误，返回错误总数
 int CGramCheck::ParentheseCheck(const char* Tempfile)
 {
 	string temp;
 	int line(0);
-	vector<vector<int> >parentheseFlag(0);
+	vector<vector<int> >parentheseFlag(0);	//符号栈，用于括号匹配
 	ifstream fin;
 	fin.open(Tempfile);
 	if (!fin) {
@@ -260,21 +276,21 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 				vector<int>temp(0);
 				temp.push_back(line);
 				temp.push_back('(');
-				parentheseFlag.push_back(temp);
+				parentheseFlag.push_back(temp);	//符号压栈
 			}
 			else if (i == '{') {
 				vector<int>temp(0);
 				temp.push_back(line);
 				temp.push_back('{');
-				parentheseFlag.push_back(temp);
+				parentheseFlag.push_back(temp);//符号压栈
 			}
 			else if (i == ')') {
 				if (!parentheseFlag.size()) {
 					vector<int>tmp(0);
 					tmp.push_back(line);
-					tmp.push_back(Rightbracket);
-					bracketError.push_back(tmp);
-					cout << "缺失左圆括号：line " << line << endl; errSum++;
+					tmp.push_back(Rightbracket);	//判断圆括号是否匹配，并进行出栈操作
+					bracketError.push_back(tmp);		//记录错误
+					cout << "缺失左圆括号：line " << line << endl; errSum++;	//控制台输出错误类型，并记录错误总数
 				}
 				else {
 					if (parentheseFlag.back()[1] != '(') {
@@ -282,7 +298,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 						tmp.push_back(line);
 						tmp.push_back(Rightbracket);
 						bracketError.push_back(tmp);
-						cout << "缺失左圆括号：line " << line << endl; errSum++;
+						cout << "缺失左圆括号：line " << line << endl; errSum++;//控制台输出错误类型，并记录错误总数
 					}
 					else {
 						parentheseFlag.pop_back();
@@ -295,7 +311,7 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 					tmp.push_back(line);
 					tmp.push_back(Leftparenth);
 					bracketError.push_back(tmp);
-					cout << "缺失左花括号：line " << line << endl; errSum++;
+					cout << "缺失左花括号：line " << line << endl; errSum++;//控制台输出错误类型，并记录错误总数
 				}
 				else {
 					while (parentheseFlag.size() && parentheseFlag.back()[1] != '{') {
@@ -336,8 +352,10 @@ int CGramCheck::ParentheseCheck(const char* Tempfile)
 		parentheseFlag.pop_back();
 	}
 	fin.close();
+	return 0;
 }
 
+//分号检查
 int CGramCheck::SemicolonCheck(const char* Tempfile)
 {
 	string temp; int line(0);
@@ -350,7 +368,7 @@ int CGramCheck::SemicolonCheck(const char* Tempfile)
 	while (getline(fin, temp)) {
 		++line;
 		if (!temp.length()) { continue; }
-		temp.erase(remove_if(temp.begin(), temp.end(), ispareth), temp.end());
+		temp.erase(remove_if(temp.begin(), temp.end(), ispareth), temp.end());	//对字符串进行处理
 		if (temp.length() && temp.back() != ';')
 		{
 			if (temp.find("if") == -1
@@ -374,12 +392,11 @@ int CGramCheck::SemicolonCheck(const char* Tempfile)
 						&& temp.find("return") == -1
 						&& temp.find("cout") == -1
 						&& temp.find("cin") == -1
-						){ }
+						){ }		//关键字查找
 					else {
 						semicolonError.push_back(line);
 						cout << "缺少分号:line" << line << endl; errSum++;
 					}
-
 			}
 		}
 	}
@@ -387,6 +404,7 @@ int CGramCheck::SemicolonCheck(const char* Tempfile)
 	return 0;
 }
 
+//计算检查
 int CGramCheck::CalculateCheck(const char* Tempfile)
 {
 	string temp;
@@ -401,9 +419,9 @@ int CGramCheck::CalculateCheck(const char* Tempfile)
 	}
 	while (getline(fin, temp)) {
 		++line;
-		bool numflag = false;
-		int p = temp.find("=");
-		if (p != -1 && p != temp.length() - 1 && temp[p + 1] != '=') {
+		bool numflag = false;		//运算成员标志位
+		int p = temp.find("=");	//寻找赋值“=”号
+		if (p != -1 && p != temp.length() - 1 && temp[p + 1] != '=') {	//判断是否为“==”比较符
 			p++;
 			if (p >= temp.length())continue;
 			while (p < temp.length()) {
@@ -446,6 +464,7 @@ int CGramCheck::CalculateCheck(const char* Tempfile)
 	return 0;
 }
 
+//冒号检查
 int CGramCheck::ColonCheck(const char* Tempfile)
 {
 	string temp;
@@ -470,6 +489,7 @@ int CGramCheck::ColonCheck(const char* Tempfile)
 	return 0;
 }
 
+//尖括号检查
 int CGramCheck::AnglebracketCheck(const char* Tempfile)
 {
 	string temp;
@@ -511,6 +531,7 @@ int CGramCheck::AnglebracketCheck(const char* Tempfile)
 	return 0;
 }
 
+//输出错误结果
 int CGramCheck::OutputResult(const char* OutFile)
 {
 	ofstream fout;
